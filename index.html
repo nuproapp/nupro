@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NU PRO - Acesso Exclusivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        purple: {
+                            950: '#0a0510',
+                            900: '#1e1035',
+                            800: '#341c5c',
+                            600: '#7c3aed',
+                            400: '#a78bfa',
+                        },
+                        accent: {
+                            500: '#00dc82',
+                            400: '#34d399',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #05020a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(124, 58, 237, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(52, 211, 153, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(124, 58, 237, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(30, 16, 53, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .comment-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s;
+        }
+
+        .input-field {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #34d399;
+            box-shadow: 0 0 15px rgba(52, 211, 153, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #7c3aed 0%, #9333ea 100%);
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-success {
+            background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Efeito de brilho no botão */
+        .btn-primary::after, .btn-success::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2.5s infinite;
+        }
+
+        @keyframes shimmer {
+            100% { left: 100%; }
+        }
+
+        .hidden-screen { display: none; }
+        .visible-screen { display: block; animation: fadeIn 0.5s ease-out forwards; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #notification-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            transform: translateY(150%);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        #notification-toast.show {
+            transform: translateY(0);
+        }
+
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col">
+
+    <div id="notification-toast" class="glass-panel p-3 rounded-xl flex items-center gap-3 max-w-[280px] border-l-4 border-l-accent-400">
+        <div class="w-8 h-8 bg-accent-400/20 rounded-full flex items-center justify-center text-accent-400 text-sm">
+            <i class="fas fa-check"></i>
+        </div>
+        <div class="flex-grow">
+            <p class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Compra Verificada</p>
+            <p class="text-xs text-white font-medium" id="notif-text">Gabriel acabou de entrar</p>
+        </div>
+    </div>
+
+    <div id="landing-screen" class="visible-screen flex-grow">
+        
+        <div class="w-full bg-red-600/90 backdrop-blur-sm py-2 px-4 text-center sticky top-0 z-50">
+            <p class="text-[10px] md:text-xs font-black uppercase tracking-widest text-white animate-pulse">
+                🔥 Restam apenas <span id="licenses-count">14</span> vagas com desconto
+            </p>
+        </div>
+
+        <nav class="w-full p-6">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="text-2xl font-black tracking-widest text-white select-none cursor-pointer">
+                    NU<span class="text-purple-500">PRO</span>
+                </div>
+                <button onclick="goToCheckout()" class="bg-white/10 hover:bg-white/20 border border-white/10 text-white px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition">
+                    Entrar
+                </button>
+            </div>
+        </nav>
+
+        <main class="pt-4 pb-20 px-4">
+            <div class="max-w-3xl mx-auto text-center relative z-10">
+                <div class="inline-block px-3 py-1 bg-purple-900/50 rounded-full border border-purple-500/30 text-[10px] font-bold uppercase tracking-widest text-purple-300 mb-6">
+                    ✨ O Simulador #1 do Brasil
+                </div>
+
+                <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6">
+                    Tenha o <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-accent-400">Status que Você Merece</span>
+                </h1>
+                
+                <p class="text-gray-400 text-base md:text-lg mb-8 leading-relaxed max-w-xl mx-auto">
+                    Não seja mais ignorado. O único app capaz de editar saldos, extratos e comprovantes bancários idênticos aos originais em segundos.
+                </p>
+
+                <div class="relative w-full max-w-2xl mx-auto aspect-video rounded-2xl overflow-hidden glass-panel border border-purple-500/20 shadow-2xl shadow-purple-900/20 mb-10 group cursor-pointer" onclick="goToCheckout()">
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/30 transition">
+                         <div class="w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center shadow-[0_0_30px_rgba(124,58,237,0.5)] group-hover:scale-110 transition duration-300">
+                            <i class="fas fa-play text-white ml-1 text-xl"></i>
+                         </div>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1616077168712-fc6c788cd4ee?q=80&w=2070&auto=format&fit=crop" class="w-full h-full object-cover opacity-60" alt="App Preview">
+                </div>
+
+                <button onclick="goToCheckout()" class="btn-primary w-full md:w-auto px-10 py-4 rounded-xl text-lg font-black text-white shadow-lg flex items-center justify-center gap-3 mx-auto uppercase tracking-wider hover:-translate-y-1 transition duration-300">
+                    Quero Acesso Agora
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+
+                <div class="flex justify-center gap-6 mt-8 text-gray-500 opacity-60 grayscale hover:grayscale-0 transition duration-500">
+                    <i class="fab fa-apple text-2xl"></i>
+                    <i class="fab fa-android text-2xl"></i>
+                    <i class="fas fa-shield-alt text-2xl"></i>
+                </div>
+            </div>
+
+            <div class="max-w-5xl mx-auto mt-24 grid md:grid-cols-3 gap-6">
+                <div class="glass-panel p-6 rounded-2xl border-t-4 border-t-purple-500">
+                    <div class="bg-purple-500/10 w-12 h-12 rounded-lg flex items-center justify-center text-purple-400 mb-4 text-xl">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2 uppercase">Edição Total</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">Altere saldo, nome, data e hora. Ninguém vai dizer que não é real.</p>
+                </div>
+                <div class="glass-panel p-6 rounded-2xl border-t-4 border-t-accent-400">
+                    <div class="bg-accent-400/10 w-12 h-12 rounded-lg flex items-center justify-center text-accent-400 mb-4 text-xl">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2 uppercase">Instantâneo</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">Não precisa baixar nada pesado. Funciona direto no navegador.</p>
+                </div>
+                <div class="glass-panel p-6 rounded-2xl border-t-4 border-t-purple-500">
+                    <div class="bg-purple-500/10 w-12 h-12 rounded-lg flex items-center justify-center text-purple-400 mb-4 text-xl">
+                        <i class="fas fa-user-secret"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2 uppercase">Modo Espião</h3>
+                    <p class="text-gray-400 text-xs leading-relaxed">Interface idêntica aos maiores bancos (Nubank, Inter, Itaú, etc).</p>
+                </div>
+            </div>
+
+            <div class="max-w-xl mx-auto mt-24 px-4 pb-10">
+                <h2 class="text-xl font-black text-center mb-8 uppercase text-gray-200">Dúvidas Comuns</h2>
+                <div class="space-y-3">
+                    <details class="glass-panel rounded-lg group">
+                        <summary class="p-4 cursor-pointer font-bold flex justify-between items-center text-xs uppercase tracking-wide">
+                            Recebo na hora?
+                            <i class="fas fa-plus text-purple-400 group-open:rotate-45 transition"></i>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-400 text-xs leading-relaxed">
+                            Sim! O sistema é automático. Pagou, recebeu no e-mail cadastrado.
+                        </div>
+                    </details>
+                    <details class="glass-panel rounded-lg group">
+                        <summary class="p-4 cursor-pointer font-bold flex justify-between items-center text-xs uppercase tracking-wide">
+                            É seguro?
+                            <i class="fas fa-plus text-purple-400 group-open:rotate-45 transition"></i>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-400 text-xs leading-relaxed">
+                            Totalmente. Usamos gateway de pagamento criptografado. Seus dados não são compartilhados.
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <footer class="text-center py-8 border-t border-white/5">
+                <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
+                    NU PRO © 2024 • Todos os direitos reservados
+                </p>
+            </footer>
+        </main>
+    </div>
+
+    <div id="checkout-screen" class="hidden-screen min-h-screen py-10 px-4 flex flex-col items-center">
+        
+        <div class="w-full max-w-md relative">
+            <button onclick="goBackToLanding()" class="text-gray-500 hover:text-white flex items-center gap-2 text-xs font-bold uppercase mb-6 transition">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </button>
+
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Finalizar Acesso</h2>
+                <p class="text-xs text-gray-400">Preencha seus dados para receber o app</p>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-6 md:p-8 border border-purple-500/20 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-50"></div>
+
+                <form onsubmit="handlePayment(event)" class="space-y-5 relative z-10">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest flex items-center justify-between">
+                            Nome Completo
+                            <i class="fas fa-user text-gray-600"></i>
+                        </label>
+                        <input type="text" required placeholder="Digite seu nome..." class="input-field w-full rounded-xl py-3.5 px-4 outline-none text-sm placeholder-gray-600 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest flex items-center justify-between">
+                            E-mail Principal
+                            <i class="fas fa-envelope text-gray-600"></i>
+                        </label>
+                        <input type="email" required placeholder="Onde você vai receber o acesso..." class="input-field w-full rounded-xl py-3.5 px-4 outline-none text-sm placeholder-gray-600 font-medium">
+                    </div>
+                    
+                    <div class="pt-2">
+                        <label class="block text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest">Pagamento Seguro</label>
+                        <div class="border border-accent-400/50 bg-accent-400/5 rounded-xl p-4 flex items-center justify-between cursor-pointer hover:bg-accent-400/10 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+                                    <i class="fa-brands fa-pix text-accent-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <span class="block text-sm font-black uppercase tracking-tighter text-white">Pix Instantâneo</span>
+                                    <span class="block text-[10px] text-accent-400 font-bold">Aprovação Imediata</span>
+                                </div>
+                            </div>
+                            <div class="w-5 h-5 rounded-full border-2 border-accent-400 flex items-center justify-center">
+                                <div class="w-2.5 h-2.5 rounded-full bg-accent-400"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between py-2 border-t border-dashed border-gray-700 mt-2">
+                        <span class="text-xs text-gray-400">Total a pagar:</span>
+                        <div class="text-right">
+                            <span class="text-xs text-gray-500 line-through mr-2">R$ 147,00</span>
+                            <span class="text-xl font-black text-white">R$ 21,67</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-success w-full py-4 rounded-xl text-white font-black text-lg uppercase tracking-wide shadow-xl hover:scale-[1.02] transition-transform">
+                        Pagar Agora
+                    </button>
+                    
+                    <div class="flex justify-center gap-3 text-[9px] text-gray-500 font-bold uppercase mt-2">
+                        <span><i class="fas fa-lock text-green-500"></i> Dados Criptografados</span>
+                        <span><i class="fas fa-shield-alt text-green-500"></i> Garantia de 7 dias</span>
+                    </div>
+                </form>
+            </div>
+
+            <div class="mt-8 w-full">
+                <div class="flex items-center gap-2 mb-4 justify-center opacity-80">
+                    <div class="h-[1px] bg-gray-700 w-12"></div>
+                    <span class="text-[10px] uppercase font-black tracking-widest text-gray-400">Quem comprou, aprovou</span>
+                    <div class="h-[1px] bg-gray-700 w-12"></div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="comment-card p-3 rounded-xl flex gap-3 items-start">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                            JP
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start">
+                                <span class="text-xs font-bold text-white">João Pedro</span>
+                                <span class="text-[9px] text-gray-500">há 2 min</span>
+                            </div>
+                            <div class="flex text-[8px] text-yellow-400 gap-0.5 my-1">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                            <p class="text-[11px] text-gray-300 leading-snug">Cara, muito real kkkkk mostrei pra gata ontem que tava com 50k na conta e o tratamento mudou na hora. Valeu cada centavo!</p>
+                        </div>
+                    </div>
+
+                    <div class="comment-card p-3 rounded-xl flex gap-3 items-start">
+                        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden shrink-0 border border-gray-600">
+                             <i class="fas fa-user text-gray-400 text-xs"></i>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start">
+                                <span class="text-xs font-bold text-white">Matheus S.</span>
+                                <span class="text-[9px] text-gray-500">há 15 min</span>
+                            </div>
+                            <div class="flex text-[8px] text-yellow-400 gap-0.5 my-1">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                            <p class="text-[11px] text-gray-300 leading-snug">Chegou certinho no email. O painel é idêntico ao do banco roxinho, dá pra editar tudo. Top dms.</p>
+                            <span class="inline-block mt-1 text-[9px] text-accent-400 bg-accent-400/10 px-1.5 py-0.5 rounded border border-accent-400/20">Compra verificada</span>
+                        </div>
+                    </div>
+
+                    <div class="comment-card p-3 rounded-xl flex gap-3 items-start">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-red-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                            AL
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start">
+                                <span class="text-xs font-bold text-white">Ana Luiza</span>
+                                <span class="text-[9px] text-gray-500">há 43 min</span>
+                            </div>
+                            <div class="flex text-[8px] text-yellow-400 gap-0.5 my-1">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                            <p class="text-[11px] text-gray-300 leading-snug">Comprei pro meu namorado e ele adorou kkk agora ele só fica tirando print pra mandar no grupo dos amigos.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <p class="text-[9px] text-gray-600"><i class="fas fa-users mr-1"></i> +1.240 pessoas compraram essa semana</p>
+                </div>
+            </div>
+            </div>
+    </div>
+
+    <script>
+        // Lógica de Licenças
+        let licenses = 14;
+        const licensesDisplay = document.getElementById('licenses-count');
+        
+        setInterval(() => {
+            if (licenses > 3) {
+                licenses--;
+                licensesDisplay.innerText = licenses;
+                licensesDisplay.parentElement.classList.add('scale-110');
+                setTimeout(() => licensesDisplay.parentElement.classList.remove('scale-110'), 200);
+            }
+        }, 45000); 
+
+        // Lógica de Notificações
+        const names = ["Ricardo", "Amanda", "Lucas", "Bruno", "Camila", "Felipe", "Juliana", "Marcos", "Patrícia", "Vinícius", "Guilherme", "Pedro"];
+        const toast = document.getElementById('notification-toast');
+        const toastText = document.getElementById('notif-text');
+
+        function showNotification() {
+            const randomName = names[Math.floor(Math.random() * names.length)];
+            toastText.innerText = `${randomName} acabou de entrar`;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+
+        setInterval(showNotification, Math.floor(Math.random() * 10000) + 8000);
+        setTimeout(showNotification, 2000);
+
+        // Navegação
+        function goToCheckout() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('landing-screen').classList.replace('visible-screen', 'hidden-screen');
+            setTimeout(() => { document.getElementById('checkout-screen').classList.replace('hidden-screen', 'visible-screen'); }, 100);
+        }
+
+        function goBackToLanding() {
+            document.getElementById('checkout-screen').classList.replace('visible-screen', 'hidden-screen');
+            setTimeout(() => { document.getElementById('landing-screen').classList.replace('hidden-screen', 'visible-screen'); }, 100);
+        }
+
+        function handlePayment(event) {
+            event.preventDefault();
+            const btn = event.target.querySelector('button');
+            const originalText = btn.innerText;
+            
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Processando...';
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+
+            // Simulação de processamento
+            setTimeout(() => {
+                const linkDePagamento = "https://pay.kiwify.com.br/SEU_LINK_AQUI"; // Substitua pelo seu link
+                window.location.href = linkDePagamento;
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
